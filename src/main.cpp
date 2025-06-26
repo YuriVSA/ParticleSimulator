@@ -14,21 +14,22 @@ struct Particle {
     sf::Vector2f acceleration;
     sf::Vector2f velocity;
 
-
+    float size;
+    sf::Color color;
     float mass;
-    
-
-    sf::CircleShape shape;
 
     Particle() : position(WIDTH / 2.0f, HEIGHT / 2.0f),
     acceleration(0.0f, 10.0f),
     velocity(0.0f, 0.0f),
-    mass(1.0f)
+    mass(1.0f),
+    size(8.0f)
     {}
 };
 
 
 int main() {
+
+    sf::VertexArray vertices(sf::Quads, NUM_PARTICULAS * 4);
 
     std::random_device rd;
     std::mt19937 gen(rd());
@@ -62,13 +63,9 @@ int main() {
 
         p.position = sf::Vector2f(distX(gen), distY(gen));
         p.velocity = sf::Vector2f(distVel(gen), distVel(gen));
-        
-        float randomSize = distSize(gen);
 
-        p.shape.setRadius(randomSize);
-        p.shape.setOrigin(randomSize, randomSize);
-        p.shape.setFillColor(sf::Color(distColor(gen), distColor(gen),distColor(gen)));
-
+        p.size = distSize(gen);
+        p.color = sf::Color(distColor(gen), distColor(gen), distColor(gen));
 
         particles.push_back(p);
     }
@@ -104,34 +101,53 @@ int main() {
             p.velocity += p.acceleration * dt;
             p.position += p.velocity * dt;
 
-            if(p.position.x < p.shape.getRadius()){
-                p.position.x = p.shape.getRadius();
+            float size = p.size;
+            
+
+            if(p.position.x < size){
+                p.position.x = size;
                 p.velocity *= -0.9f;
 
             }
-            else if(p.position.x > WIDTH - p.shape.getRadius()){
-                p.position.x = WIDTH - p.shape.getRadius();
+            else if(p.position.x > WIDTH - size){
+                p.position.x = WIDTH - size;
                 p.velocity *= 0.9f;
             }
 
-            if(p.position.y < p.shape.getRadius()){
-                p.position.y = p.shape.getRadius();
+            if(p.position.y < size){
+                p.position.y = size;
                 p.velocity *= -0.9f;
             }
-            else if(p.position.y > HEIGHT - p.shape.getRadius()){
-                p.position.y = HEIGHT - p.shape.getRadius();
+            else if(p.position.y > HEIGHT - size){
+                p.position.y = HEIGHT - size;
                 p.velocity *= -0.9f;
             }
+        }
+
+        for (std::size_t i = 0; i < particles.size(); ++i) {
+            const auto& p = particles[i];
+
+            // Pega o ponteiro para o quad (os 4 vértices) desta partícula
+            sf::Vertex* quad = &vertices[i * 4];
+
+            // Define a posição dos 4 cantos do quadrado ao redor da posição da partícula
+            quad[0].position = sf::Vector2f(p.position.x - p.size, p.position.y - p.size); // Canto sup esq
+            quad[1].position = sf::Vector2f(p.position.x + p.size, p.position.y - p.size); // Canto sup dir
+            quad[2].position = sf::Vector2f(p.position.x + p.size, p.position.y + p.size); // Canto inf dir
+            quad[3].position = sf::Vector2f(p.position.x - p.size, p.position.y + p.size); // Canto inf esq
+
+            // Define a cor para os 4 vértices
+            quad[0].color = p.color;
+            quad[1].color = p.color;
+            quad[2].color = p.color;
+            quad[3].color = p.color;
         }
 
         window.clear(sf::Color::White);
 
         //DRAW
-        for (auto& p : particles) { 
-            p.shape.setPosition(p.position);
-            window.draw(p.shape);
-        }
 
+        window.draw(vertices);
         window.draw(fpsText);
 
         
