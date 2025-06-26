@@ -7,7 +7,20 @@
 
 float WIDTH = 800;
 float HEIGHT = 600;
-const int NUM_PARTICULAS = 5000;
+const int NUM_PARTICULAS = 100;
+
+sf::VertexArray vertices(sf::Quads, NUM_PARTICULAS * 4);
+
+std::random_device rd;
+    std::mt19937 gen(rd());
+
+//Distributions
+std::uniform_real_distribution<float> distX(0.0f, WIDTH);
+std::uniform_real_distribution<float> distY(0.0f, HEIGHT);
+std::uniform_real_distribution<float> distVel(-50.0f, 50.0f);
+std::uniform_int_distribution<int> distColor(0, 255);
+std::uniform_real_distribution<float> distSize(2.0f, 8.0f);
+
 
 struct Particle {
     sf::Vector2f position;
@@ -28,18 +41,6 @@ struct Particle {
 
 
 int main() {
-
-    sf::VertexArray vertices(sf::Quads, NUM_PARTICULAS * 4);
-
-    std::random_device rd;
-    std::mt19937 gen(rd());
-
-    //Distributions
-    std::uniform_real_distribution<float> distX(0.0f, WIDTH);
-    std::uniform_real_distribution<float> distY(0.0f, HEIGHT);
-    std::uniform_real_distribution<float> distVel(-50.0f, 50.0f);
-    std::uniform_int_distribution<int> distColor(0, 255);
-    std::uniform_real_distribution<float> distSize(2.0f, 8.0f);
 
     sf::RenderWindow window(sf::VideoMode(WIDTH, HEIGHT), "Janela SFML");
 
@@ -85,6 +86,9 @@ int main() {
         float fps = 1.0f / dt;
         fpsText.setString("FPS: " + std::to_string(static_cast<int>(fps)));
 
+        bool LeftClickON = sf::Mouse::isButtonPressed(sf::Mouse::Left);
+        bool RightClickON = sf::Mouse::isButtonPressed(sf::Mouse::Right);
+
         sf::Event ev;
 
         while(window.pollEvent(ev)){
@@ -92,6 +96,8 @@ int main() {
             if(ev.type == sf::Event::Closed){
                 window.close();
             }
+
+            
         }
 
         //UPDATE
@@ -106,21 +112,21 @@ int main() {
 
             if(p.position.x < size){
                 p.position.x = size;
-                p.velocity *= -0.9f;
+                p.velocity.x *= -0.9f;
 
             }
             else if(p.position.x > WIDTH - size){
                 p.position.x = WIDTH - size;
-                p.velocity *= 0.9f;
+                p.velocity.x *= -0.9f;
             }
 
             if(p.position.y < size){
                 p.position.y = size;
-                p.velocity *= -0.9f;
+                p.velocity.y *= -0.9f;
             }
             else if(p.position.y > HEIGHT - size){
                 p.position.y = HEIGHT - size;
-                p.velocity *= -0.9f;
+                p.velocity.y *= -0.9f;
             }
         }
 
