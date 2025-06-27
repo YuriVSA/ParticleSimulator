@@ -10,7 +10,8 @@
 float WIDTH = 800;
 float HEIGHT = 600;
 float CellSize = 6.0f;
-const int NUM_PARTICULAS = 5000;
+const int NUM_PARTICULAS = 10000;
+const int SOLVER_ITERATIONS = 1;
 
 sf::VertexArray vertices(sf::Quads, NUM_PARTICULAS * 4);
 
@@ -22,7 +23,7 @@ std::uniform_real_distribution<float> distX(0.0f, WIDTH);
 std::uniform_real_distribution<float> distY(0.0f, HEIGHT);
 std::uniform_real_distribution<float> distVel(-50.0f, 50.0f);
 std::uniform_int_distribution<int> distColor(0, 255);
-//std::uniform_real_distribution<float> distSize(2.0f, 8.0f);
+std::uniform_real_distribution<float> distSize(2.0f, 8.0f);
 std::uniform_real_distribution<float> distMass(1.0f, 10.0f);
 
 
@@ -61,8 +62,9 @@ int main() {
         p.position = sf::Vector2f(distX(gen), distY(gen));
         p.velocity = sf::Vector2f(distVel(gen), distVel(gen));
 
-        p.mass = distMass(gen);
+        //p.mass = distMass(gen);
         //p.color = sf::Color(distColor(gen), distColor(gen), distColor(gen));
+        //p.size = distSize(gen);
         p.color = sf::Color::Blue;
         
 
@@ -125,43 +127,44 @@ int main() {
         }
 
         // Collision Detection
-        for(auto& p1 : particles){
-            std::vector<Particle*> neighbors = grid.getNeighbors(&p1);
+        for (int i = 0; i < SOLVER_ITERATIONS; ++i) {
+            for(auto& p1 : particles){
+                std::vector<Particle*> neighbors = grid.getNeighbors(&p1);
 
-            for(Particle* p2 : neighbors){
-                if(&p1 == p2) continue;
-                if (p2 < &p1) continue;
+                for(Particle* p2 : neighbors){
+                    if(&p1 == p2) continue;
+                    if (p2 < &p1) continue;
 
-                sf::Vector2f collisionAxis = p1.position - p2->position;
-                float dist2 = collisionAxis.x * collisionAxis.x + collisionAxis.y * collisionAxis.y;
-                float combinedRadius = p1.size + p2->size;
+                    sf::Vector2f collisionAxis = p1.position - p2->position;
+                    float dist2 = collisionAxis.x * collisionAxis.x + collisionAxis.y * collisionAxis.y;
+                    float combinedRadius = p1.size + p2->size;
 
-                if (dist2 < combinedRadius * combinedRadius && dist2 > 0.0001f) {
-                    float distance = std::sqrt(dist2);
+                    if (dist2 < combinedRadius * combinedRadius && dist2 > 0.0001f) {
+                        float distance = std::sqrt(dist2);
 
-                    
-                    sf::Vector2f normal = collisionAxis / distance;
+                        
+                        sf::Vector2f normal = collisionAxis / distance;
 
-                    //Overlap
-                    float overlap = 0.5f * (combinedRadius - distance);
+                        //Overlap
+                        float overlap = 0.5f * (combinedRadius - distance);
 
-                    p1.position += normal * overlap;
-                    p2->position -= normal * overlap;
+                        p1.position += normal * overlap;
+                        p2->position -= normal * overlap;
 
-                    //Resolution
-                    sf::Vector2f tangent(-normal.y, normal.x);
-                    float dpTan1 = p1.velocity.x * tangent.x + p1.velocity.y * tangent.y;
-                    float dpTan2 = p2->velocity.x * tangent.x + p2->velocity.y * tangent.y;
-                    float dpNorm1 = p1.velocity.x * normal.x + p1.velocity.y * normal.y;
-                    float dpNorm2 = p2->velocity.x * normal.x + p2->velocity.y * normal.y;
-                    float m1 = (dpNorm1 * (p1.mass - p2->mass) + 2.0f * p2->mass * dpNorm2) / (p1.mass + p2->mass);
-                    float m2 = (dpNorm2 * (p2->mass - p1.mass) + 2.0f * p1.mass * dpNorm1) / (p1.mass + p2->mass);
-                    p1.velocity = tangent * dpTan1 + normal * m1;
-                    p2->velocity = tangent * dpTan2 + normal * m2;
+                        //Resolution
+                        sf::Vector2f tangent(-normal.y, normal.x);
+                        float dpTan1 = p1.velocity.x * tangent.x + p1.velocity.y * tangent.y;
+                        float dpTan2 = p2->velocity.x * tangent.x + p2->velocity.y * tangent.y;
+                        float dpNorm1 = p1.velocity.x * normal.x + p1.velocity.y * normal.y;
+                        float dpNorm2 = p2->velocity.x * normal.x + p2->velocity.y * normal.y;
+                        float m1 = (dpNorm1 * (p1.mass - p2->mass) + 2.0f * p2->mass * dpNorm2) / (p1.mass + p2->mass);
+                        float m2 = (dpNorm2 * (p2->mass - p1.mass) + 2.0f * p1.mass * dpNorm1) / (p1.mass + p2->mass);
+                        p1.velocity = tangent * dpTan1 + normal * m1;
+                        p2->velocity = tangent * dpTan2 + normal * m2;
+                    }
                 }
             }
-        }
-            
+        }    
         
         // Collision Walls and Floor
         for(auto& p : particles){

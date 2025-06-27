@@ -18,7 +18,7 @@ struct Particle {
     Particle(float WIDTH, float HEIGHT) : position(WIDTH / 2.0f, HEIGHT / 2.0f),
     acceleration(0.0f, 10.0f),
     velocity(0.0f, 0.0f),
-    mass(1.0f),
+    mass(100.0f),
     size(3.0f)
     {}
 };
